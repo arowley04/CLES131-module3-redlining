@@ -36,6 +36,12 @@ We will use a vector dataset of redlining maps from [Mapping Inequality](https:/
 
 Click 'Explore the Maps' to look at some cities and neighborhoods you are familiar with. Who is the intended audience of this data science project, and how are the data used to communicate understanding, insight, and knowledge? Why is this effective?
 
+I chose Chicago, IL. I assume the intended audience of this data science project is modern day individuals interested in learning about the history of redlining in America. The map of Chicago created using the 1940 census data was likely intended for real estate developers, city planners, policy makers, investors/banks, and other individuals/organizations that played a role in redlining Chicago back in the mid 1900's. 
+
+The polygons on the map represent different property types and categorized by most to least desirable for residential areas, which is denoted by color, and industrial and commercial areas are denoted by symbol. The color choice for assigning implied value to residential areas green (best), blue (still desirable), yellow (definitely declining), and red (hazardous) is effective because these colors have the same intuitive meaning to a diverse audience and can be easily identified on the map. 
+
+The 'Note About This Data' describes how racial profiles were accounted by grouping different minorities together based on the 1940 city census, which is beneficial for users today to understand how the raw data was manipulated and represented on the map, which suggests some bias in the representation of certain Asian demographics. Additionally, the "Context" and "Area Descriptions" provide a lot of useful background about the history of redlining in Chicago and the racial demogaphics within different delineated areas. 
+
 ### Q2 (1 point)
 
 Create a `data/` folder in the root of your project and create five subfolders labeled with the city names from Fig. 2 of Schell et al. 2020. Because the spatial files will be large, add `data/` to the .gitignore file. 
