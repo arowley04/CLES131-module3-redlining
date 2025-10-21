@@ -9,18 +9,20 @@ editor_options:
 ```{r}
 #| warning: false
 library(sf) # simple features for R
+# install.packages("tera")
 library(terra) # spatial data analysis
+install.packages("tidyterra", dependencies = TRUE)
 library(tidyterra) #tidyverse methods for terra objects
 library(tidyverse)
 ```
 
 ### Use of GitHub
 
-Link to your forked GH repository:
+Link to your forked GH repository: git@github.com:arowley04/CLES131-module3-redlining.git
 
 ### Use of Quarto
 
-Link to your .qmd file:
+Link to your .qmd file: 
 
 # Ecological consequences of redlining
 
@@ -43,6 +45,18 @@ Then, go back to the home page of [Mapping Inequality](https://dsl.richmond.edu/
 Import the geojson file into your R environment with the `st_read`()` function from sf. Check the structure of this object and see that it is a special type of data frame, allowing it to be manipulated with many of the functions you already know, including ggplot. 
 
 Make a quick plot of your first city showing the "grade" in color using ggplot syntax and `geom_sf()`. Select a color scheme that better comports with redlining. 
+
+```{r}
+# Read in data 
+baltimore <- st_read("data/J_20250603T155001_B08_10m copy.jp2")
+baltimore  
+st_crs(baltimore)
+
+birmingham <- st_read("data/T16SEC_20190831T162839_B04_10m.jp2")
+birmingham  
+st_crs(birmingham)
+```
+
 
 ## The raster data
 
