@@ -9,9 +9,8 @@ editor_options:
 ```{r}
 #| warning: false
 library(sf) # simple features for R
-# install.packages("tera")
+# install.packages("terra")
 library(terra) # spatial data analysis
-install.packages("tidyterra", dependencies = TRUE)
 library(tidyterra) #tidyverse methods for terra objects
 library(tidyverse)
 ```
@@ -54,13 +53,17 @@ Make a quick plot of your first city showing the "grade" in color using ggplot s
 
 ```{r}
 # Read in data 
-baltimore <- st_read("data/J_20250603T155001_B08_10m copy.jp2")
+baltimore <- st_read("data/baltimore/balt_geojson.json") ###NOT RUNNING
 baltimore  
 st_crs(baltimore)
+```
 
-birmingham <- st_read("data/T16SEC_20190831T162839_B04_10m.jp2")
-birmingham  
-st_crs(birmingham)
+```{r}
+# Plot
+ggplot() +
+  geom_sf(data = baltimore) +
+  labs(title = "Baltimore",
+       subtitle = "EPSG WGS84") #Ctr + i helps realign 
 ```
 
 
