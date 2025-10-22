@@ -39,7 +39,7 @@ I chose Chicago, IL. I assume the intended audience of this data science project
 
 The polygons on the map represent different property types and categorized by most to least desirable for residential areas, which is denoted by color, and industrial and commercial areas are denoted by symbol. The color choice for assigning implied value to residential areas green (best), blue (still desirable), yellow (definitely declining), and red (hazardous) is effective because these colors have the same intuitive meaning to a diverse audience and can be easily identified on the map. 
 
-The 'Note About This Data' describes how racial profiles were accounted by grouping different minorities together based on the 1940 city census, which is beneficial for users today to understand how the raw data was manipulated and represented on the map, which suggests some bias in the representation of certain Asian demographics. Additionally, the "Context" and "Area Descriptions" provide a lot of useful background about the history of redlining in Chicago and the racial demogaphics within different delineated areas. 
+The 'Note About This Data' describes how racial profiles were accounted by grouping different minorities together based on the 1940 city census, which is beneficial for users today to understand how the raw data was manipulated and represented on the map. This section suggests some potential bias in the representation of certain Asian demographics. Additionally, the "Context" and "Area Descriptions" provide a lot of useful background about the history of redlining in Chicago and the racial demogaphics within different delineated areas. 
 
 ### Q2 (1 point)
 
@@ -107,6 +107,25 @@ For each city, locate the 10m resolution files for the B04 and B08 bands along w
 ### Q3 (1 point)
 Use the terra package and the `rast()` function to import the two bands, which are reported as digital numbers. 
 Combine to calculate NDVI ($ (NIR - R) / (NIR + R)$) and display a quick plot of your first city. 
+
+```{r}
+# Import data 
+balt_b04 <- rast("data/baltimore/T18SUJ_20250603T155001_B04_10m copy.jp2")
+balt_b08 <- rast("data/baltimore/T18SUJ_20250603T155001_B08_10m copy.jp2")
+
+birm_b04 <- rast("data/birmingham /T16SEC_20190831T162839_B04_10m.jp2") 
+birm_b08 <- rast("data/birmingham /T16SEC_20190831T162839_B08_10m.jp2") 
+
+indy_b04 <- rast("data/indianapolis/T16TEK_20251003T163141_B04_10m.jp2")
+indy_b08 <- rast("data/indianapolis/T16TEK_20251003T163141_B08_10m.jp2")
+
+minn_b04 <- rast("data/minneapolis/T15TVK_20190808T170901_B04_10m.jp2")
+minn_b08 <- rast("data/minneapolis/T15TVK_20190808T170901_B08_10m.jp2")
+
+phe_b04 <- rast("data/pheonix/T12SUC_20221118T181641_B04_10m.jp2")
+phe_b08 <- rast("data/pheonix/T12SUC_20221118T181641_B08_10m.jp2")
+```
+
 
 ### Bonus 1 (1 point)
 Since you have 5 cities to plot, can you optimize the same operations as Q3 with a for loop? 
