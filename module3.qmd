@@ -60,10 +60,28 @@ st_crs(baltimore)
 
 ```{r}
 # Plot
+
+# unique(baltimore$fill) #see original hex code for each "grade" in color
+
 ggplot() +
-  geom_sf(data = baltimore) +
-  labs(title = "Baltimore",
-       subtitle = "EPSG WGS84") #Ctr + i helps realign 
+  geom_sf(data = baltimore, aes(fill = grade)) +
+  scale_fill_manual(values = c("A"="#76a865", 
+                               "B"="#7cb5bd", 
+                               "C"="#ffff00", 
+                               "D"= "#d9838d",
+                               "Industrial & Commercial"= "lightgrey"),
+                    labels = c("A" = "Best",
+                               "B" = "Still Desireable",
+                               "C" = "Definitely Declining",
+                               "D" = "Hazardous",
+                               "Industrial & Commercial" = "Industrial & Commercial")) + 
+  labs(title = "Baltimore, MD (1940) Redlining Map",
+       subtitle = "EPSG:4326 (GCS WGS84)",
+       fill = "Grade") +
+  theme_bw()
+
+baltimore[baltimore$fill == "#00000", ] #inspecting weird NA values
+baltimore$grade[is.na(baltimore$grade)] <- "Industrial & Commercial" #assigning NA values as industrial/commercial areas
 ```
 
 
