@@ -53,15 +53,33 @@ Make a quick plot of your first city showing the "grade" in color using ggplot s
 
 ```{r}
 # Read in data 
-baltimore <- st_read("data/baltimore/balt_geojson.json") ###NOT RUNNING
+baltimore <- st_read("data/baltimore/balt_geojson.json") 
 baltimore  
 st_crs(baltimore)
+
+birmingham <- st_read("data/birmingham //birm_geojson.json") 
+birmingham 
+st_crs(birmingham)
+
+indianapolis <- st_read("data/indianapolis//indy_geojson.json") 
+indianapolis
+st_crs(indianapolis)
+
+minneapolis <- st_read("data/minneapolis/minn_geojson.json") 
+minneapolis
+st_crs(minneapolis)
+
+pheonix <- st_read("data/pheonix/pho_geojson.json") 
+pheonix
+st_crs(pheonix)
 ```
 
 ```{r}
-# Plot
+# Plot first city
 
 # unique(baltimore$fill) #see original hex code for each "grade" in color
+# baltimore[baltimore$fill == "#00000", ] #inspecting weird NA values
+baltimore$grade[is.na(baltimore$grade)] <- "Industrial & Commercial" #assigning NA values as industrial/commercial areas
 
 ggplot() +
   geom_sf(data = baltimore, aes(fill = grade)) +
@@ -76,12 +94,9 @@ ggplot() +
                                "D" = "Hazardous",
                                "Industrial & Commercial" = "Industrial & Commercial")) + 
   labs(title = "Baltimore, MD (1940) Redlining Map",
-       subtitle = "EPSG:4326 (GCS WGS84)",
+       subtitle = "GCS WGS84",
        fill = "Grade") +
   theme_bw()
-
-baltimore[baltimore$fill == "#00000", ] #inspecting weird NA values
-baltimore$grade[is.na(baltimore$grade)] <- "Industrial & Commercial" #assigning NA values as industrial/commercial areas
 ```
 
 
@@ -109,23 +124,40 @@ Use the terra package and the `rast()` function to import the two bands, which a
 Combine to calculate NDVI ($ (NIR - R) / (NIR + R)$) and display a quick plot of your first city. 
 
 ```{r}
-# Import data 
-balt_b04 <- rast("data/baltimore/T18SUJ_20250603T155001_B04_10m copy.jp2")
-balt_b08 <- rast("data/baltimore/T18SUJ_20250603T155001_B08_10m copy.jp2")
+# Read in data 
+balt_R <- rast("data/baltimore/T18SUJ_20250603T155001_B04_10m_copy.jp2")
+balt_NIR <- rast("data/baltimore/T18SUJ_20250603T155001_B08_10m_copy.jp2")
+terra::crs(balt_R)
+terra::crs(balt_NIR)
 
-birm_b04 <- rast("data/birmingham /T16SEC_20190831T162839_B04_10m.jp2") 
-birm_b08 <- rast("data/birmingham /T16SEC_20190831T162839_B08_10m.jp2") 
+birm_R <- rast("data/birmingham /T16SEC_20190831T162839_B04_10m.jp2") 
+birm_NIR <- rast("data/birmingham /T16SEC_20190831T162839_B08_10m.jp2") 
 
-indy_b04 <- rast("data/indianapolis/T16TEK_20251003T163141_B04_10m.jp2")
-indy_b08 <- rast("data/indianapolis/T16TEK_20251003T163141_B08_10m.jp2")
+indy_R <- rast("data/indianapolis/T16TEK_20251003T163141_B04_10m.jp2")
+indy_NIR <- rast("data/indianapolis/T16TEK_20251003T163141_B08_10m.jp2")
 
-minn_b04 <- rast("data/minneapolis/T15TVK_20190808T170901_B04_10m.jp2")
-minn_b08 <- rast("data/minneapolis/T15TVK_20190808T170901_B08_10m.jp2")
+minn_R <- rast("data/minneapolis/T15TVK_20190808T170901_B04_10m.jp2")
+minn_NIR <- rast("data/minneapolis/T15TVK_20190808T170901_B08_10m.jp2")
 
-phe_b04 <- rast("data/pheonix/T12SUC_20221118T181641_B04_10m.jp2")
-phe_b08 <- rast("data/pheonix/T12SUC_20221118T181641_B08_10m.jp2")
+phe_R <- rast("data/pheonix/T12SUC_20221118T181641_B04_10m.jp2")
+phe_NIR <- rast("data/pheonix/T12SUC_20221118T181641_B08_10m.jp2")
 ```
 
+```{r}
+# Calculate NDVI
+balt_NDVI <- (balt_NIR - balt_R) / (balt_NIR + balt_R)
+
+birm_NIR <- (birm_NIR - birm_R) / (birm_NIR + birm_R)
+
+indy_NIR <- (indy_NIR - indy_R) / (indy_NIR + indy_R)
+
+minn_NIR <- (minn_NIR - minn_R) / (minn_NIR + minn_R)
+
+phe_NIR <- (phe_NIR - phe_R) / (phe_NIR + phe_R)
+
+# Quick plot of first city 
+plot(balt_NDVI)
+```
 
 ### Bonus 1 (1 point)
 Since you have 5 cities to plot, can you optimize the same operations as Q3 with a for loop? 
@@ -133,6 +165,8 @@ Since you have 5 cities to plot, can you optimize the same operations as Q3 with
 ### Q4 (1 point)
 Do the rasters and polygons share the same coordinate reference system? If not, project both into the same CRS and justify your choice. 
 
+They do not share the same coordinate reference system. The polygon data (.json files) use the standard Geographic CRS (EPSG 4326), while the raster data (.jp2 files) use the Compound CRS (EPSG 8806). 
+ 
 ### Q5 (1 points)
 Overlay the projected vector file onto the projected NDVI for a single city using `tidyterra::geom_spatraster()` in addition to `geom_sf()`. Adjust the color scales and add a scale bar to approximate Fig. 2a of Schell et al. 2020. 
 
