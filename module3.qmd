@@ -147,13 +147,13 @@ phe_NIR <- rast("data/pheonix/T12SUC_20221118T181641_B08_10m.jp2")
 # Calculate NDVI
 balt_NDVI <- (balt_NIR - balt_R) / (balt_NIR + balt_R)
 
-birm_NIR <- (birm_NIR - birm_R) / (birm_NIR + birm_R)
+birm_NDVI <- (birm_NIR - birm_R) / (birm_NIR + birm_R)
 
-indy_NIR <- (indy_NIR - indy_R) / (indy_NIR + indy_R)
+indy_NDVI <- (indy_NIR - indy_R) / (indy_NIR + indy_R)
 
-minn_NIR <- (minn_NIR - minn_R) / (minn_NIR + minn_R)
+minn_NDVI <- (minn_NIR - minn_R) / (minn_NIR + minn_R)
 
-phe_NIR <- (phe_NIR - phe_R) / (phe_NIR + phe_R)
+phe_NDVI <- (phe_NIR - phe_R) / (phe_NIR + phe_R)
 
 # Quick plot of first city 
 plot(balt_NDVI)
@@ -165,8 +165,36 @@ Since you have 5 cities to plot, can you optimize the same operations as Q3 with
 ### Q4 (1 point)
 Do the rasters and polygons share the same coordinate reference system? If not, project both into the same CRS and justify your choice. 
 
-They do not share the same coordinate reference system. The polygon data (.json files) use the standard Geographic CRS (EPSG 4326), while the raster data (.jp2 files) use the Compound CRS (EPSG 8806). 
- 
+They do not share the same coordinate reference system. The polygon data (.json files) uses the geographic coordinate system (WGS 84 (EPSG 4326)), while the raster data (.jp2 files) use a projected coordinate system (WGS 84 / UTM zone 18N (EPSG:32618).
+
+```{r}
+# Project both into the same CRS
+balt_full <- st_transform(baltimore, 
+                                terra::crs(balt_NDVI)) 
+terra::crs(balt_full) 
+
+birm_full <- st_transform(birmingham, 
+                                terra::crs(birm_NDVI)) 
+terra::crs(birm_full) 
+
+indy_full <- st_transform(indianapolis, 
+                                terra::crs(indy_NDVI)) 
+terra::crs(indy_full) 
+
+minn_full <- st_transform(minneapolis, 
+                                terra::crs(minn_NDVI)) 
+terra::crs(minn_full) 
+
+phe_full <- st_transform(pheonix, 
+                                terra::crs(phe_NDVI)) 
+terra::crs(phe_full) 
+```
+
+Map projections come in 2 varieties: 
+1. Conformal - preserves angles but not lengths
+2. Equal area projections - area is preserved but shapes or bearings are distorted 
+It's not possible to 100% preserve both. Maps require compromises to best illustrate specific features based on the goals of the map. In this case, I wanted to preserve the raster data because it already had a projected coordinate system containing accurate distance and area measurements (m) for the area, so it makes sense to keep this layer and reproject the polygon data. 
+
 ### Q5 (1 points)
 Overlay the projected vector file onto the projected NDVI for a single city using `tidyterra::geom_spatraster()` in addition to `geom_sf()`. Adjust the color scales and add a scale bar to approximate Fig. 2a of Schell et al. 2020. 
 
