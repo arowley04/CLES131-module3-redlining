@@ -146,6 +146,9 @@ phe_NIR <- rast("data/pheonix/T12SUC_20221118T181641_B08_10m.jp2")
 ```{r}
 # Calculate NDVI
 balt_NDVI <- (balt_NIR - balt_R) / (balt_NIR + balt_R)
+balt_NDVI
+crs(balt_NDVI)
+
 
 birm_NDVI <- (birm_NIR - birm_R) / (birm_NIR + birm_R)
 
@@ -171,7 +174,7 @@ They do not share the same coordinate reference system. The polygon data (.json 
 # Project both into the same CRS
 balt_full <- st_transform(baltimore, 
                                 terra::crs(balt_NDVI)) 
-terra::crs(balt_full) 
+# View(balt_full)
 
 birm_full <- st_transform(birmingham, 
                                 terra::crs(birm_NDVI)) 
@@ -198,8 +201,53 @@ It's not possible to 100% preserve both. Maps require compromises to best illust
 ### Q5 (1 points)
 Overlay the projected vector file onto the projected NDVI for a single city using `tidyterra::geom_spatraster()` in addition to `geom_sf()`. Adjust the color scales and add a scale bar to approximate Fig. 2a of Schell et al. 2020. 
 
+```{r}
+# install.packages("ggspatial")
+library(ggspatial)
+
+balt_bbox <- st_bbox(balt_full) # get bounding box in UTM meters
+
+# Overlay projected vector file onto projected NDVI 
+ggplot() +
+  geom_spatraster(data = balt_NDVI) +
+  scale_fill_gradientn(name = "NDVI Scale",
+                       colours = c("#36454f", "white", "#006400"),
+                       limits = c(-1, 1),
+                       breaks = c(-0.5, 0, 0.5, 1),
+                       labels = c("Low NDVI\n(low vegetation)", "", "", 
+                                  "High NDVI\n(high vegetation)"),
+                       na.value = "transparent") +
+  guides(fill = guide_colorbar(reverse = TRUE)) +
+  new_scale_color() + #for redlining scale
+  geom_sf(data = balt_full, 
+          aes(color = grade), 
+          fill = NA, 
+          linewidth = 1.1) +
+  scale_color_manual(name = "Redlining Grade",
+                     values = c("A" = "#76a865",
+                                "B" = "#7cb5bd",
+                                "C" = "#ffff00",
+                                "D" = "#d9838d",
+                                "Industrial & Commercial" = "lightgrey"),
+                     guide = guide_legend(override.aes = list(fill = NA, size = 2))) +
+  annotation_scale(location = "bl",
+                   width_hint = 0.25,
+                   unit_category = "imperial", #converts to miles
+                   text_cex = 0.8,
+                   bar_cols = c("black", "white")) +
+  coord_sf(crs = st_crs(balt_full), # forces 32618 (meters) bc it kept being in coordinates
+           xlim = c(balt_bbox["xmin"], balt_bbox["xmax"]),
+           ylim = c(balt_bbox["ymin"], balt_bbox["ymax"]),
+           expand = FALSE,
+           datum = st_crs(balt_full)) +
+  theme_minimal() +
+  labs(title = "Baltimore, MD")
+```
+
+
 ### Q6 (1 point)
 Repeat the above for all 5 cities and add the city name. Explore the `cowplot` or `patchwork` packages to create a multi-panel figure. 
+
 
 ### Q7 (2 points)
 Now, let's examine the relationship between redlining and NDVI. Temporarily re-read in your redlining polygons using `terra:::vect()`. You can use `terra:extract()` on these temporary polygons within `mutate()` on your original polygons read in with `read_sf()`. Because the output of `terra::extract()` is a data.frame, `dplyr::pull()` can be helpful. 
