@@ -13,6 +13,7 @@ library(sf) # simple features for R
 library(terra) # spatial data analysis
 library(tidyterra) #tidyverse methods for terra objects
 library(tidyverse)
+library(dplyr)
 ```
 
 ### Use of GitHub
@@ -125,6 +126,7 @@ Combine to calculate NDVI ($ (NIR - R) / (NIR + R)$) and display a quick plot of
 
 ```{r}
 # Read in data 
+#note: data was provided by Adam bc I had so much trouble accessing the files and started quite late. I confirmed this with you earlier last week.  
 balt_R <- rast("data/baltimore/T18SUJ_20250603T155001_B04_10m_copy.jp2")
 balt_NIR <- rast("data/baltimore/T18SUJ_20250603T155001_B08_10m_copy.jp2")
 terra::crs(balt_R)
@@ -173,24 +175,23 @@ They do not share the same coordinate reference system. The polygon data (.json 
 ```{r}
 # Project both into the same CRS
 balt_full <- st_transform(baltimore, 
-                                terra::crs(balt_NDVI)) 
-# View(balt_full)
+                          crs = terra::crs(balt_NDVI)) 
+# balt_full
 
 birm_full <- st_transform(birmingham, 
-                                terra::crs(birm_NDVI)) 
-terra::crs(birm_full) 
+                          crs = terra::crs(birm_NDVI)) 
+
 
 indy_full <- st_transform(indianapolis, 
-                                terra::crs(indy_NDVI)) 
-terra::crs(indy_full) 
+                          crs = terra::crs(indy_NDVI)) 
+
 
 minn_full <- st_transform(minneapolis, 
-                                terra::crs(minn_NDVI)) 
-terra::crs(minn_full) 
+                          crs = terra::crs(minn_NDVI)) 
 
-phe_full <- st_transform(pheonix, 
-                                terra::crs(phe_NDVI)) 
-terra::crs(phe_full) 
+
+phe_full <- st_transform(pheonix,
+                         crs = terra::crs(phe_NDVI)) 
 ```
 
 Map projections come in 2 varieties: 
@@ -202,51 +203,256 @@ It's not possible to 100% preserve both. Maps require compromises to best illust
 Overlay the projected vector file onto the projected NDVI for a single city using `tidyterra::geom_spatraster()` in addition to `geom_sf()`. Adjust the color scales and add a scale bar to approximate Fig. 2a of Schell et al. 2020. 
 
 ```{r}
-# install.packages("ggspatial")
-library(ggspatial)
+# Plot Baltimore 
+#install.packages("ggnewscale")
+library(ggnewscale) #adds multiple scales
+library(ggspatial) #adds annotation scale
 
-balt_bbox <- st_bbox(balt_full) # get bounding box in UTM meters
+
+balt_bbox <- st_bbox(balt_full) # get bounding box in UTM meters https://www.rdocumentation.org/packages/sp/versions/2.2-0/topics/bbox-methods
 
 # Overlay projected vector file onto projected NDVI 
-ggplot() +
+p2 <- ggplot() +
   geom_spatraster(data = balt_NDVI) +
-  scale_fill_gradientn(name = "NDVI Scale",
+  scale_fill_gradientn(name = "NDVI Scale", #use when there's no given scale
                        colours = c("#36454f", "white", "#006400"),
                        limits = c(-1, 1),
                        breaks = c(-0.5, 0, 0.5, 1),
                        labels = c("Low NDVI\n(low vegetation)", "", "", 
                                   "High NDVI\n(high vegetation)"),
                        na.value = "transparent") +
-  guides(fill = guide_colorbar(reverse = TRUE)) +
+  guides(fill = guide_colorbar(reverse = TRUE)) + #change order scale appears in
   new_scale_color() + #for redlining scale
   geom_sf(data = balt_full, 
           aes(color = grade), 
-          fill = NA, 
-          linewidth = 1.1) +
+          fill = NA, #make outlines for redline areas
+          linewidth = 1) +
   scale_color_manual(name = "Redlining Grade",
                      values = c("A" = "#76a865",
                                 "B" = "#7cb5bd",
                                 "C" = "#ffff00",
                                 "D" = "#d9838d",
                                 "Industrial & Commercial" = "lightgrey"),
-                     guide = guide_legend(override.aes = list(fill = NA, size = 2))) +
+                     guide = guide_legend(override.aes = list(fill = NA, size = 2))) + #make square outlines 
   annotation_scale(location = "bl",
                    width_hint = 0.25,
                    unit_category = "imperial", #converts to miles
                    text_cex = 0.8,
                    bar_cols = c("black", "white")) +
-  coord_sf(crs = st_crs(balt_full), # forces 32618 (meters) bc it kept being in coordinates
-           xlim = c(balt_bbox["xmin"], balt_bbox["xmax"]),
+  coord_sf(crs = st_crs(balt_full), # forces meters bc it kept being in coordinates
+           xlim = c(balt_bbox["xmin"], balt_bbox["xmax"]), #https://r-spatial.github.io/sf/reference/st_bbox.html 
            ylim = c(balt_bbox["ymin"], balt_bbox["ymax"]),
            expand = FALSE,
            datum = st_crs(balt_full)) +
   theme_minimal() +
-  labs(title = "Baltimore, MD")
+  labs(title = "2. Baltimore, MD") +
+  theme(plot.title = element_text(size = 8.5, 
+                                  face = "bold"))
+p2
 ```
 
 
 ### Q6 (1 point)
 Repeat the above for all 5 cities and add the city name. Explore the `cowplot` or `patchwork` packages to create a multi-panel figure. 
+```{r}
+### Repeat the above for all 5 cities and add the city name.
+
+## Indianapolis, IN
+indy_bbox <- st_bbox(indy_full) # get bounding box in UTM meters
+
+# Overlay projected vector file onto projected NDVI 
+p1 <- ggplot() +
+  geom_spatraster(data = indy_NDVI) +
+  scale_fill_gradientn(name = "NDVI Scale", #use when there's no given scale
+                       colours = c("#36454f", "white", "#006400"),
+                       limits = c(-1, 1),
+                       breaks = c(-0.5, 0, 0.5, 1),
+                       labels = c("Low NDVI\n(low vegetation)", "", "", 
+                                  "High NDVI\n(high vegetation)"),
+                       na.value = "transparent") +
+  guides(fill = guide_colorbar(reverse = TRUE)) + #change order scale appears in
+  new_scale_color() + #for redlining scale
+  geom_sf(data = indy_full, 
+          aes(color = grade), 
+          fill = NA, #make outlines for redline areas
+          linewidth = 1) +
+  scale_color_manual(name = "Redlining Grade",
+                     values = c("A" = "#76a865",
+                                "B" = "#7cb5bd",
+                                "C" = "#ffff00",
+                                "D" = "#d9838d",
+                                "Industrial & Commercial" = "lightgrey"),
+                     guide = guide_legend(override.aes = list(fill = NA, size = 2))) + #make square outlines 
+  annotation_scale(location = "bl",
+                   width_hint = 0.25,
+                   unit_category = "imperial", #converts to miles
+                   text_cex = 0.8,
+                   bar_cols = c("black", "white")) +
+  coord_sf(crs = st_crs(indy_full), # forces meters bc it kept being in coordinates
+           xlim = c(indy_bbox["xmin"], indy_bbox["xmax"]),
+           ylim = c(indy_bbox["ymin"], indy_bbox["ymax"]),
+           expand = FALSE,
+           datum = st_crs(indy_full)) +
+  theme_minimal() +
+  labs(title = "1. Indianapolis, IN") +
+  theme(plot.title = element_text(size = 8.5, 
+                                  face = "bold"))
+p1
+
+## Pheonix, AR
+phe_bbox <- st_bbox(phe_full) # get bounding box in UTM meters
+
+# Overlay projected vector file onto projected NDVI 
+p3 <- ggplot() +
+  geom_spatraster(data = phe_NDVI) +
+  scale_fill_gradientn(name = "NDVI Scale", #use when there's no given scale
+                       colours = c("#36454f", "white", "#006400"),
+                       limits = c(-1, 1),
+                       breaks = c(-0.5, 0, 0.5, 1),
+                       labels = c("Low NDVI\n(low vegetation)", "", "", 
+                                  "High NDVI\n(high vegetation)"),
+                       na.value = "transparent") +
+  guides(fill = guide_colorbar(reverse = TRUE)) + #change order scale appears in
+  new_scale_color() + #for redlining scale
+  geom_sf(data = phe_full, 
+          aes(color = grade), 
+          fill = NA, #make outlines for redline areas
+          linewidth = 1) +
+  scale_color_manual(name = "Redlining Grade",
+                     values = c("A" = "#76a865",
+                                "B" = "#7cb5bd",
+                                "C" = "#ffff00",
+                                "D" = "#d9838d",
+                                "Industrial & Commercial" = "lightgrey"),
+                     guide = guide_legend(override.aes = list(fill = NA, size = 2))) + #make square outlines 
+  annotation_scale(location = "bl",
+                   width_hint = 0.25,
+                   unit_category = "imperial", #converts to miles
+                   text_cex = 0.8,
+                   bar_cols = c("black", "white")) +
+  coord_sf(crs = st_crs(phe_full), # forces meters bc it kept being in coordinates
+           xlim = c(phe_bbox["xmin"], phe_bbox["xmax"]),
+           ylim = c(phe_bbox["ymin"], phe_bbox["ymax"]),
+           expand = FALSE,
+           datum = st_crs(phe_full)) +
+  theme_minimal() +
+  labs(title = "3. Pheonix, AR") +
+  theme(plot.title = element_text(size = 8.5, 
+                                  face = "bold"))
+p3
+
+## Birmingham, AL
+birm_bbox <- st_bbox(birm_full) # get bounding box in UTM meters
+
+# Overlay projected vector file onto projected NDVI 
+p4 <- ggplot() +
+  geom_spatraster(data = birm_NDVI) +
+  scale_fill_gradientn(name = "NDVI Scale", #use when there's no given scale
+                       colours = c("#36454f", "white", "#006400"),
+                       limits = c(-1, 1),
+                       breaks = c(-0.5, 0, 0.5, 1),
+                       labels = c("Low NDVI\n(low vegetation)", "", "", 
+                                  "High NDVI\n(high vegetation)"),
+                       na.value = "transparent") +
+  guides(fill = guide_colorbar(reverse = TRUE)) + #change order scale appears in
+  new_scale_color() + #for redlining scale
+  geom_sf(data = birm_full, 
+          aes(color = grade), 
+          fill = NA, #make outlines for redline areas
+          linewidth = 1) +
+  scale_color_manual(name = "Redlining Grade",
+                     values = c("A" = "#76a865",
+                                "B" = "#7cb5bd",
+                                "C" = "#ffff00",
+                                "D" = "#d9838d",
+                                "Industrial & Commercial" = "lightgrey"),
+                     guide = guide_legend(override.aes = list(fill = NA, size = 2))) + #make square outlines 
+  annotation_scale(location = "bl",
+                   width_hint = 0.25,
+                   unit_category = "imperial", #converts to miles
+                   text_cex = 0.8,
+                   bar_cols = c("black", "white")) +
+  coord_sf(crs = st_crs(birm_full), # forces meters bc it kept being in coordinates
+           xlim = c(birm_bbox["xmin"], birm_bbox["xmax"]),
+           ylim = c(birm_bbox["ymin"], birm_bbox["ymax"]),
+           expand = FALSE,
+           datum = st_crs(birm_full)) +
+  theme_minimal() +
+  labs(title = "4. Birmingham, AL") +
+  theme(plot.title = element_text(size = 8.5, 
+                                  face = "bold"))
+p4
+
+## Minneapolis, MN
+minn_bbox <- st_bbox(minn_full) # get bounding box in UTM meters
+
+# Overlay projected vector file onto projected NDVI 
+p5 <- ggplot() +
+  geom_spatraster(data = minn_NDVI) +
+  scale_fill_gradientn(name = "NDVI Scale", #use when there's no given scale
+                       colours = c("#36454f", "white", "#006400"),
+                       limits = c(-1, 1),
+                       breaks = c(-0.5, 0, 0.5, 1),
+                       labels = c("Low NDVI\n(low vegetation)", "", "", 
+                                  "High NDVI\n(high vegetation)"),
+                       na.value = "transparent") +
+  guides(fill = guide_colorbar(reverse = TRUE)) + #change order scale appears in
+  new_scale_color() + #for redlining scale
+  geom_sf(data = minn_full, 
+          aes(color = grade), 
+          fill = NA, #make outlines for redline areas
+          linewidth = 1) +
+  scale_color_manual(name = "Redlining Grade",
+                     values = c("A" = "#76a865",
+                                "B" = "#7cb5bd",
+                                "C" = "#ffff00",
+                                "D" = "#d9838d",
+                                "Industrial & Commercial" = "lightgrey"),
+                     guide = guide_legend(override.aes = list(fill = NA, size = 2))) + #make square outlines 
+  annotation_scale(location = "bl",
+                   width_hint = 0.25,
+                   unit_category = "imperial", #converts to miles
+                   text_cex = 0.8,
+                   bar_cols = c("black", "white")) +
+  coord_sf(crs = st_crs(minn_full), # forces meters bc it kept being in coordinates
+           xlim = c(minn_bbox["xmin"], minn_bbox["xmax"]),
+           ylim = c(minn_bbox["ymin"], minn_bbox["ymax"]),
+           expand = FALSE,
+           datum = st_crs(minn_full)) +
+  theme_minimal() +
+  labs(title = "5. Minneapolis, MN") +
+  theme(plot.title = element_text(size = 8.5, 
+                                  face = "bold"))
+p5
+```
+
+```{r}
+## Explore the `cowplot` or `patchwork` packages to create a multi-panel figure. 
+
+# Remove legends bc it makes the multi-panel fig look very off
+p1_noleg <- p1 + theme(legend.position = "none")
+p2_noleg <- p2 + theme(legend.position = "none")
+p3_noleg <- p3 + theme(legend.position = "none")
+p4_noleg <- p4 + theme(legend.position = "none")
+# keep legend for p5
+```
+
+```{r}
+# install.packages("cowplot")
+library(cowplot)
+
+full_plot <- plot_grid(p1_noleg, p2_noleg, p3_noleg,
+  p4_noleg, p5, #https://r-graph-gallery.com/package/cowplot.html
+  ncol = 3) +
+  theme(legend.box.margin = margin(0, 1000000, 0, 0))  # give right column more space 
+
+title <- ggdraw() + 
+  draw_label("A", fontface = "bold", size = 14)
+
+# Combine title & full_plot to plot
+fig2A <- plot_grid(title, full_plot, ncol = 1, rel_heights = c(0.1, 1))
+fig2A
+```
 
 
 ### Q7 (2 points)
