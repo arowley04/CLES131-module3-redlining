@@ -460,6 +460,149 @@ Now, let's examine the relationship between redlining and NDVI. Temporarily re-r
 
 Extract the mean, median, and central 95% quantile of NDVI from each delineated neighborhood while retaining the identity of the city. Perform your choice of at least two exploratory data visualizations utilizing different variables to evaluate this relationship and examine whether it differs between cities. 
 
+```{r}
+## Temporarily re-read in your redlining polygons
+
+#Baltimore
+balt_par <- balt_full |> 
+  mutate(
+    ndvi_mean = terra::extract(balt_NDVI, terra::vect(balt_full), fun = mean, na.rm = TRUE)[, 2],
+    ndvi_median = terra::extract(balt_NDVI, terra::vect(balt_full), fun = median, na.rm = TRUE)[, 2],
+    ndvi_q95 = {
+      ndvi_vals <- terra::extract(balt_NDVI, terra::vect(balt_full)) |>
+        rename(NDVI = 2)
+      ndvi_vals |> 
+        group_by(ID) |> 
+        summarise(q95 = quantile(NDVI, 0.975, na.rm = TRUE) - 
+                          quantile(NDVI, 0.025, na.rm = TRUE)) |> 
+        pull(q95)
+    }
+  ) |> 
+  mutate(city = "Baltimore")
+
+ head(balt_par)
+
+
+#Birmingham
+birm_par <- birm_full |> 
+  mutate(
+    ndvi_mean = terra::extract(birm_NDVI, terra::vect(birm_full), fun = mean, na.rm = TRUE)[, 2],
+    ndvi_median = terra::extract(birm_NDVI, terra::vect(birm_full), fun = median, na.rm = TRUE)[, 2],
+    ndvi_q95 = {
+      ndvi_vals <- terra::extract(birm_NDVI, terra::vect(birm_full)) |>
+        rename(NDVI = 2)
+      ndvi_vals |> 
+        group_by(ID) |> 
+        summarise(q95 = quantile(NDVI, 0.975, na.rm = TRUE) - 
+                          quantile(NDVI, 0.025, na.rm = TRUE)) |> 
+        pull(q95)
+    }
+  ) |> 
+  mutate(city = "Birmingham")
+
+
+#Indianapolis 
+indy_par <- indy_full |> 
+  mutate(
+    ndvi_mean = terra::extract(indy_NDVI, terra::vect(indy_full), fun = mean, na.rm = TRUE)[, 2],
+    ndvi_median = terra::extract(indy_NDVI, terra::vect(indy_full), fun = median, na.rm = TRUE)[, 2],
+    ndvi_q95 = {
+      ndvi_vals <- terra::extract(indy_NDVI, terra::vect(indy_full)) |>
+        rename(NDVI = 2)
+      ndvi_vals |> 
+        group_by(ID) |> 
+        summarise(q95 = quantile(NDVI, 0.975, na.rm = TRUE) - 
+                          quantile(NDVI, 0.025, na.rm = TRUE)) |> 
+        pull(q95)
+    }
+  ) |> 
+  mutate(city = "Indianapolis")
+
+#Minneapolis
+minn_par <- minn_full |> 
+  mutate(
+    ndvi_mean = terra::extract(minn_NDVI, terra::vect(minn_full), fun = mean, na.rm = TRUE)[, 2],
+    ndvi_median = terra::extract(minn_NDVI, terra::vect(minn_full), fun = median, na.rm = TRUE)[, 2],
+    ndvi_q95 = {
+      ndvi_vals <- terra::extract(minn_NDVI, terra::vect(minn_full)) |>
+        rename(NDVI = 2)
+      ndvi_vals |> 
+        group_by(ID) |> 
+        summarise(q95 = quantile(NDVI, 0.975, na.rm = TRUE) - 
+                          quantile(NDVI, 0.025, na.rm = TRUE)) |> 
+        pull(q95)
+    }
+  ) |> 
+  mutate(city = "Minneapolis")
+
+
+#Pheonix
+phe_par <- phe_full |> 
+  mutate(
+    ndvi_mean = terra::extract(phe_NDVI, terra::vect(phe_full), fun = mean, na.rm = TRUE)[, 2],
+    ndvi_median = terra::extract(phe_NDVI, terra::vect(phe_full), fun = median, na.rm = TRUE)[, 2],
+    ndvi_q95 = {
+      ndvi_vals <- terra::extract(phe_NDVI, terra::vect(phe_full)) |>
+        rename(NDVI = 2)
+      ndvi_vals |> 
+        group_by(ID) |> 
+        summarise(q95 = quantile(NDVI, 0.975, na.rm = TRUE) - 
+                          quantile(NDVI, 0.025, na.rm = TRUE)) |> 
+        pull(q95)
+    }
+  ) |> 
+  mutate(city = "Pheonix")
+```
+
+```{r}
+## Perform your choice of at least two exploratory data visualization utilizing different variables to evaluate this relationship and examine whether it differs between cities
+
+balt_par_2 <- st_transform(balt_par, 4326) #transform all to same CRS
+birm_par_2 <- st_transform(birm_par, 4326)
+indy_par_2 <- st_transform(indy_par, 4326)
+minn_par_2 <- st_transform(minn_par, 4326)
+phe_par_2  <- st_transform(phe_par, 4326)
+
+all_cities_par <- bind_rows(balt_par_2, birm_par_2, indy_par_2, minn_par_2, phe_par_2)
+
+# 1. Plot: NDVI v. Redlining across citiies
+ggplot(all_cities_par, aes(x = factor(grade, 
+                                      levels = c("A", "B", "C", "D")), #each redlining grade
+                           y = ndvi_mean, #comparing by ndvi mean 
+                           fill = grade)) +
+  geom_boxplot() +
+  facet_wrap(~ city) +
+  scale_fill_manual(name = "Redlining Grade",
+                    values = c("A" = "#76a865",
+                               "B" = "#7cb5bd",
+                               "C" = "#ffff00",
+                               "D" = "#d9838d",
+                               "Industrial & Commercial" = "lightgrey")) +  
+  labs(x = "Redlining Grade",
+       y = "Mean NDVI (Vegetation Greenness)") +
+  theme_minimal()
+```
+
+```{r}
+ndvi_summary <- all_cities_par |>
+  st_drop_geometry() |> #drops geometry
+  group_by(city, grade) |>
+  summarise(mean_q95 = mean(ndvi_q95, na.rm = TRUE), .groups = "drop") #finds mean of 95% quantile of NDVI 
+
+# 2. Plot: NDVI Variability v Redlining across cities 
+ggplot(ndvi_summary, aes(x = grade, y = mean_q95, fill = grade)) +
+  geom_col() +
+  facet_wrap(~ city) +
+  scale_fill_manual(values = c("A"="#76a865", 
+                               "B"="#7cb5bd", 
+                               "C"="#ffff00", 
+                               "D"="#d9838d")) +
+  labs(x = "Redlining Grade",
+       y = "Mean NDVI Variability (95% quantile of NDVI)") +
+  theme_minimal()
+```
+
+
 ### Bonus 2 (1 point)
 Perform a statistical test to support your visual analysis above. 
 
