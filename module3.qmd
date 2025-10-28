@@ -469,13 +469,13 @@ balt_par <- balt_full |>
     ndvi_mean = terra::extract(balt_NDVI, terra::vect(balt_full), fun = mean, na.rm = TRUE)[, 2],
     ndvi_median = terra::extract(balt_NDVI, terra::vect(balt_full), fun = median, na.rm = TRUE)[, 2],
     ndvi_q95 = {
-      ndvi_vals <- terra::extract(balt_NDVI, terra::vect(balt_full)) |>
+      ndvi_vals <- terra::extract(balt_NDVI, terra::vect(balt_full)) |> #https://rdrr.io/cran/terra/man/extract.html
         rename(NDVI = 2)
       ndvi_vals |> 
         group_by(ID) |> 
         summarise(q95 = quantile(NDVI, 0.975, na.rm = TRUE) - 
                           quantile(NDVI, 0.025, na.rm = TRUE)) |> 
-        pull(q95)
+        pull(q95) #https://www.statology.org/dplyr-pull/
     }
   ) |> 
   mutate(city = "Baltimore")
@@ -504,7 +504,7 @@ birm_par <- birm_full |>
 #Indianapolis 
 indy_par <- indy_full |> 
   mutate(
-    ndvi_mean = terra::extract(indy_NDVI, terra::vect(indy_full), fun = mean, na.rm = TRUE)[, 2],
+    ndvi_mean = terra::extract(indy_NDVI, terra::vect(indy_full), fun = mean, na.rm = TRUE)[, 2], 
     ndvi_median = terra::extract(indy_NDVI, terra::vect(indy_full), fun = median, na.rm = TRUE)[, 2],
     ndvi_q95 = {
       ndvi_vals <- terra::extract(indy_NDVI, terra::vect(indy_full)) |>
@@ -608,6 +608,35 @@ Perform a statistical test to support your visual analysis above.
 
 ### Q8 (2 points)
 Create a final plot and describe whether NDVI is associated with historical redlining. Does this pattern differ between the five cities examined here? If so, how? 
+
+```{r}
+ndvi_summary_2 <- all_cities_par %>%
+  st_drop_geometry() |>  # ignore geometry
+  group_by(city, grade) |> 
+  summarise(
+    mean_ndvi = mean(ndvi_mean, na.rm = TRUE),
+    median_ndvi = mean(ndvi_median, na.rm = TRUE),
+    mean_q95 = mean(ndvi_q95, na.rm = TRUE),
+    .groups = "drop")
+
+## Final Plot
+ggplot(ndvi_summary_2, aes(x = grade, y = median_ndvi, color = grade)) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = median_ndvi - mean_q95/2, 
+                    ymax = median_ndvi + mean_q95/2),
+                width = 0.1) +
+  facet_wrap(~ city) +
+  scale_color_manual(values = c("A"="#76a865", 
+                                "B"="#7cb5bd", 
+                                "C"="#ffff00", 
+                                "D"="#d9838d")) +
+  labs(x = "Redlining Grade",
+       y = "Median NDVI (95% quantile of NDVI))") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7)) #diagonal labels & smaller text size
+```
+
+According to the final plot comparing redlining grades to the median NDVI with 95% quantile of NDVI across cities, NDVI is associated with historical redlining. Grades A and B overall have a higher median NDVI and less variability across all cities. Grades C and D, have the lowest median NDVI across most of the major cities and greater variability, with Grade D having the lowest median NDVI across all cities except Birmingham. 
 
 ### Bonus 3 (1 point)
 Include the results of your statistical test in the final plot and use prose to incorporate statistical output in the context of the question above. 
