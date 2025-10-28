@@ -1,7 +1,7 @@
 # Module 3: Redlining
 
 ## Team members and contributions
-To be updated
+I contributed as a sole team member
 
 ## Learning objectives
 
@@ -21,7 +21,7 @@ To be updated
 ### Quarto file (2 points)
  - 0 points for no .qmd file or wholly incorrect formatting
  - 1 point for mostly correct code and text, but not all file paths or plots are working so the pdf is incompletely rendered
- - 2 points for well-formatted file that fully renders to pdf
+ - 2 points for well-formatted file that fully renders to pdf *I tried my best to fit everything in the render, but it cut off parts of my comments
  
 ### Code and written analysis (10 points)
 See .qmd file for point distributions. 
