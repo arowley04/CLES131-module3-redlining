@@ -461,7 +461,7 @@ Now, let's examine the relationship between redlining and NDVI. Temporarily re-r
 Extract the mean, median, and central 95% quantile of NDVI from each delineated neighborhood while retaining the identity of the city. Perform your choice of at least two exploratory data visualizations utilizing different variables to evaluate this relationship and examine whether it differs between cities. 
 
 ```{r}
-## Temporarily re-read in your redlining polygons
+## Temporarily re-read in your redlining polygons. Extract the mean, median, and central 95% quantile of NDVI from each delineated neighborhood while retaining the identity of the city. P
 
 #Baltimore
 balt_par <- balt_full |> 
