@@ -557,7 +557,7 @@ phe_par <- phe_full |>
 ```{r}
 ## Perform your choice of at least two exploratory data visualization utilizing different variables to evaluate this relationship and examine whether it differs between cities
 
-balt_par_2 <- st_transform(balt_par, 4326) #transform all to same CRS
+balt_par_2 <- st_transform(balt_par, 4326) #transform all to same CRS bc it was giving me issues 
 birm_par_2 <- st_transform(birm_par, 4326)
 indy_par_2 <- st_transform(indy_par, 4326)
 minn_par_2 <- st_transform(minn_par, 4326)
@@ -605,12 +605,73 @@ ggplot(ndvi_summary, aes(x = grade, y = mean_q95, fill = grade)) +
 
 ### Bonus 2 (1 point)
 Perform a statistical test to support your visual analysis above. 
+```{r}
+## ANOVA models NDVI v. Redlining across cities
+
+# 1.Baltimore 
+balt_aov <- aov(ndvi_mean ~ factor(grade), data = balt_par |> 
+                  st_drop_geometry())
+plot(balt_aov) #checking assumption of normality & variance 
+
+library(car)
+leveneTest(ndvi_mean ~ factor(grade), data = balt_par |> 
+             st_drop_geometry()) #checking assumption of variance 
+
+
+# 2.Birmingham
+birm_aov <- aov(ndvi_mean ~ factor(grade), data = birm_par |> 
+                  st_drop_geometry())
+plot(birm_aov) #checking assumption of normality & variance 
+leveneTest(ndvi_mean ~ factor(grade), data = birm_par |> 
+             st_drop_geometry()) #checking assumption of variance 
+
+# 3.Indianapolis
+indy_aov <- aov(ndvi_mean ~ factor(grade), data = indy_par |> 
+                  st_drop_geometry())
+plot(indy_aov) #checking assumption of normality & variance 
+leveneTest(ndvi_mean ~ factor(grade), data = indy_par |> 
+             st_drop_geometry()) #checking assumption of variance 
+
+# 4. Minneapolis 
+minn_aov <- aov(ndvi_mean ~ factor(grade), data = minn_par |> 
+                  st_drop_geometry())
+plot(minn_aov) #checking assumption of normality & variance 
+leveneTest(ndvi_mean ~ factor(grade), data  =minn_par |> 
+             st_drop_geometry()) #checking assumption of variance 
+
+
+
+# 5. Pheonix
+phe_aov <- aov(ndvi_mean ~ factor(grade), data = phe_par |> 
+                  st_drop_geometry())
+plot(phe_aov) #checking assumption of normality & variance 
+leveneTest(ndvi_mean ~ factor(grade), data  =minn_phe |> 
+             st_drop_geometry()) #checking assumption of variance 
+```
+
+
+```{r}
+## ANOVA models NDVI v. Redlining across cities
+
+# Split by city and run ANOVA
+anova_results <- all_cities_par |> 
+  st_drop_geometry() |> 
+  group_by(city) |> 
+  summarise(anova = list(aov(ndvi_mean ~ factor(grade), data = cur_data()))) |> #use cur_data to drop group by in summary https://stackoverflow.com/questions/62529336/appropriate-times-to-use-cur-data-vs-across-in-dplyr-1-0
+  mutate(summary = lapply(anova, summary))
+
+anova_results$summary[[1]] #Baltimore
+anova_results$summary[[2]] #Birmingham
+anova_results$summary[[3]] #Indianapolis 
+anova_results$summary[[4]] #Minneapolis
+anova_results$summary[[5]] #Pheonix
+```
 
 ### Q8 (2 points)
 Create a final plot and describe whether NDVI is associated with historical redlining. Does this pattern differ between the five cities examined here? If so, how? 
 
 ```{r}
-ndvi_summary_2 <- all_cities_par %>%
+ndvi_summary_2 <- all_cities_par |> 
   st_drop_geometry() |>  # ignore geometry
   group_by(city, grade) |> 
   summarise(
